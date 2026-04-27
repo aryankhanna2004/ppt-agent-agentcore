@@ -1,0 +1,43 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# TypeScript / build
+dist/
+*.tsbuildinfo
+
+# CDK
+cdk.out/
+.cdk.staging/
+
+# AgentCore CLI local state (contains deploy logs, invoke logs, session traces,
+# and deployed resource ARNs for YOUR account — do not commit)
+agentcore/.cli/
+agentcore/.cli/**
+
+# AgentCore project-local secrets (API keys, etc.)
+agentcore/.env
+agentcore/.env.local
+agentcore/.env.*
+
+# Your real deployment target (account ID) — use aws-targets.example.json as a
+# starting point and copy it to aws-targets.json locally
+agentcore/aws-targets.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Generated decks / harness session artifacts (for local experimentation)
+artifacts/
+/tmp/deck*

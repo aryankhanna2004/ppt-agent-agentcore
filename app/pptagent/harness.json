@@ -1,0 +1,30 @@
+{
+  "name": "pptagent",
+  "model": {
+    "provider": "bedrock",
+    "modelId": "us.anthropic.claude-opus-4-5-20251101-v1:0"
+  },
+  "tools": [
+    { "type": "agentcore_browser", "name": "browser" },
+    { "type": "agentcore_code_interpreter", "name": "code-interpreter" }
+  ],
+  "skills": ["/opt/skills/pptx"],
+  "memory": {
+    "name": "pptagentMemory"
+  },
+  "dockerfile": "Dockerfile",
+  "sessionStoragePath": "/mnt/data",
+  "maxIterations": 60,
+  "timeoutSeconds": 1800,
+  "truncation": {
+    "strategy": "sliding_window"
+  },
+  "environmentVariables": {
+    "SKILLS_PATH": "/opt/skills",
+    "DECKS_DIR": "/mnt/data/decks",
+    "TEMPLATES_PATH": "/opt/templates",
+    "USER_TEMPLATES_PATH": "/mnt/data/templates",
+    "DEFAULT_TEMPLATE": "/opt/templates/default-template.pptx"
+  },
+  "authorizerType": "AWS_IAM"
+}
