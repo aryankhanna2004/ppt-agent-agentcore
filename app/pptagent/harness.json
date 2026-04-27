@@ -2,7 +2,8 @@
   "name": "pptagent",
   "model": {
     "provider": "bedrock",
-    "modelId": "us.anthropic.claude-opus-4-5-20251101-v1:0"
+    "modelId": "us.anthropic.claude-opus-4-7",
+    "maxTokens": 64000
   },
   "tools": [
     { "type": "agentcore_browser", "name": "browser" },

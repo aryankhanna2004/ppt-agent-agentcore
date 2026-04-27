@@ -16,7 +16,7 @@
 > | `@aws/agentcore` (CLI) | `1.0.0-preview.2` |
 > | `@aws/agentcore-cdk` | `0.1.0-alpha.22` |
 > | AWS CDK | `^2.x` (as pinned in `agentcore/cdk/package.json`) |
-> | Claude model | `us.anthropic.claude-opus-4-5-20251101-v1:0` |
+> | Claude model | `us.anthropic.claude-opus-4-7` (geo inference, `us`) |
 > | Region tested | `us-east-1` |
 >
 > If you're reading this later and things don't deploy, first pin to the
@@ -36,7 +36,12 @@ It ships a custom ARM64 container (Python + Node + LibreOffice +
 [PPTX skill](https://github.com/anthropics/skills/tree/main/skills), and is
 wired up with:
 
-- **Model:** Claude Opus 4.5 via Bedrock
+- **Model:** Claude Opus 4.7 via Bedrock (1M-token context, 128K max output, new
+  tokenizer, adaptive-thinking-capable). The system prompt has been migrated
+  to 4.7's literal style per Anthropic's
+  [migration guide](https://docs.anthropic.com/en/docs/about-claude/models/migrating-to-claude-4)
+  — direct `MUST` / `NEVER` rules, no "think step by step" scaffolding,
+  explicit tool-use mandates.
 - **Tools:** AgentCore `browser` (to scrape / screenshot live sites) and
   `code-interpreter` (sandboxed Python/Node)
 - **Memory:** semantic + user-preference + summarization + episodic
@@ -74,7 +79,7 @@ can actually invoke.
 │          │                │                 │               │
 │   ┌──────▼─────┐   ┌──────▼──────┐   ┌──────▼──────┐        │
 │   │  Bedrock   │   │  Browser    │   │  Code       │        │
-│   │  Opus 4.5  │   │  tool       │   │  Interp.    │        │
+│   │  Opus 4.7  │   │  tool       │   │  Interp.    │        │
 │   └────────────┘   └─────────────┘   └─────────────┘        │
 └─────────────────────────────────────────────────────────────┘
         ▲
@@ -118,8 +123,9 @@ CLI.
 - Python 3.10+ (for Bedrock CLI tooling, not for the agent itself)
 - AWS credentials with permission to deploy CDK, CodeBuild, IAM roles,
   Bedrock AgentCore, ECR, S3. `aws configure` or env vars.
-- Access to **Claude Opus 4.5 in Bedrock** in your chosen region (request it
-  once under *Bedrock → Model access*).
+- Access to **Claude Opus 4.7 in Bedrock** in your chosen region (request it
+  once under *Bedrock → Model access*; the harness uses the geo-inference ID
+  `us.anthropic.claude-opus-4-7`).
 - The AgentCore CLI, pinned to the exact version this repo was built against:
 
   ```bash
@@ -199,6 +205,30 @@ The agent follows a strict versioning protocol defined in
 - Within a `runtimeSessionId`, the `/mnt/data/` mount survives turns, so you
   can keep iterating ("make slide 4 punchier", "swap the theme to dark mode").
 
+### Session persistence (`/mnt/data`) — important
+
+The harness is deployed with managed session storage
+(`filesystemConfigurations.sessionStorage.mountPath = /mnt/data`) which gives
+you S3-backed persistence *scoped to a `runtimeSessionId`*. This means:
+
+- **Same `--session-id` across invocations** → same `/mnt/data` contents
+  (prior decks + user-uploaded templates are all there).
+- **No `--session-id` (or a new one)** → fresh, empty `/mnt/data` → the agent
+  has no memory of previous decks on disk.
+
+To iterate across commands, reuse one session id:
+
+```bash
+SID=$(uuidgen)                                 # or any string ≥ 33 chars
+agentcore invoke --harness pptagent --session-id "$SID" \
+  --prompt "Build deck-onboarding-v1.pptx from <outline>…"
+agentcore invoke --harness pptagent --session-id "$SID" \
+  --prompt "Make slide 4 punchier and save as v2."
+```
+
+Memory (semantic / summarization / episodic) still carries across sessions;
+`/mnt/data` contents do not.
+
 ### Retrieving the generated `.pptx`
 
 The harness microVM has no direct egress to your laptop. The cleanest path is:
@@ -265,8 +295,9 @@ Other directions:
   `agentcore/cdk/` and regenerate with the current CLI, or cherry-pick
   `ContainerImageBuilder` usage from this repo's `agentcore/cdk/lib/cdk-stack.ts`.
 - **`AccessDeniedException: … bedrock:InvokeModel`** → request model access
-  for Claude Opus 4.5 in the Bedrock console for the region in
-  `aws-targets.json`.
+  for Claude Opus 4.7 (`anthropic.claude-opus-4-7`, enable the geo inference
+  profile `us.anthropic.claude-opus-4-7`) in the Bedrock console for the
+  region in `aws-targets.json`.
 
 ---
 
